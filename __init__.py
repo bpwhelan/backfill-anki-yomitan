@@ -1,4 +1,5 @@
-import requests
+import urllib
+import json
 from anki.collection import Collection
 from aqt.operations import CollectionOp, OpChanges, OpChangesWithCount
 from aqt import mw
@@ -8,18 +9,24 @@ from aqt.qt import *
 request_url = "http://127.0.0.1:8766"
 request_timeout = 10
 
-# https://github.com/Kuuuube/yomitan-api/blob/master/request_example.py
-def request_handlebar(expression, handlebar) -> None:
-    params = {
+def request_handlebar(expression, handlebar):
+    body = {
         "text": expression,
         "type": "term",
         "markers": [handlebar],
         "maxEntries": 1,
     }
+
+    req = urllib.request.Request(
+        request_url + "/ankiFields",
+        data=json.dumps(body).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
     
-    response = requests.post(request_url + "/ankiFields", json = params, timeout = request_timeout)
-    data = response.json()
-    
+    response = urllib.request.urlopen(req, timeout=request_timeout)  
+    data = json.loads(response.read())
+
     return data[0].get(handlebar)
 
 def open_dialog():
@@ -35,7 +42,7 @@ class BackfillDialog(QDialog):
         self.fields = QComboBox()
         self.expression_field = QComboBox()
         self.yomitan_handlebar = QLineEdit()
-        self.apply = QPushButton("Apply")
+        self.apply = QPushButton("Run")
         self.cancel = QPushButton("Cancel")
         self.replace = QCheckBox("Replace Current");
         
