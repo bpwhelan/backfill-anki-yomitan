@@ -11,10 +11,10 @@ This is a basic Anki add-on to backfill fields using [Yomitan's API](https://git
 2. Go to `Tools -> Backfill from Yomitan` in the top bar
 3. Select your deck in the `Deck` dropdown
 4. For `Expression Field` choose the expression field (e.g. `Expression` in Lapis, `word` in Senren) of your note type, this is the field that will be queried into Yomitan
-5. For `Field` choose the field which is to be backfilled
-6. In `Handlebar` type in the Yomitan handlebar, from which you wish to pull data from, without the {} brackets (e.g. frequency-harmonic-rank) 
-7. Optionally tick `Replace Current` if you wish to replace the current content of the field in every card
-8. Press Run
+5. For `Field` choose the field to be backfilled
+6. In `Handlebar` type in the Yomitan handlebar, from which you wish to pull data from, without brackets (e.g. `frequency-harmonic-rank`) 
+7. Optionally tick `Replace` if you wish to replace the current content of the field in every card
+8. Press `Run`
 
 Changes can be undone with `Edit -> Undo` or with `CTRL + Z`
 

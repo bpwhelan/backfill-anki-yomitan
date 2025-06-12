@@ -44,7 +44,7 @@ class BackfillDialog(QDialog):
         self.yomitan_handlebar = QLineEdit()
         self.apply = QPushButton("Run")
         self.cancel = QPushButton("Cancel")
-        self.replace = QCheckBox("Replace Current");
+        self.replace = QCheckBox("Replace");
         
         form = QFormLayout()
         form.addRow(QLabel("Deck:"), self.decks)
@@ -66,7 +66,7 @@ class BackfillDialog(QDialog):
         self._update_fields()
 
         self.decks.currentIndexChanged.connect(self._update_fields)
-        self.apply.clicked.connect(self._on_apply)
+        self.apply.clicked.connect(self._on_run)
         self.cancel.clicked.connect(self.reject)
 
     def _load_decks(self):
@@ -85,13 +85,7 @@ class BackfillDialog(QDialog):
         if deck_id is None:
             return
 
-        rows = mw.col.db.list(
-            "SELECT DISTINCT n.mid"
-            " FROM notes n"
-            " JOIN cards c ON n.id = c.nid"
-            " WHERE c.did = ?", deck_id
-        )
-        model_ids = [row for row in rows]
+        model_ids = mw.col.db.list("SELECT DISTINCT n.mid FROM notes n JOIN cards c ON n.id = c.nid WHERE c.did = ?", deck_id)
 
         field_names = set()
         for mid in model_ids:
@@ -103,7 +97,7 @@ class BackfillDialog(QDialog):
             self.fields.addItem(name)
             self.expression_field.addItem(name)
     
-    def _on_apply(self):
+    def _on_run(self):
         deck_id = self.decks.currentData()
         expression_field = self.expression_field.currentText()
         field = self.fields.currentText()
