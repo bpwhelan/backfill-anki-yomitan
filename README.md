@@ -20,3 +20,6 @@ Changes can be undone with `Edit -> Undo` or with `CTRL + Z`
 
 ## Issues
 The add-on currently only pulls the first result from the API and can therefore not handle different readings (it will fill identical expressions with the same data).
+
+## Screenshot
+![screenshot](https://github.com/Manhhao/backfill-anki-yomitan/blob/main/screenshot/image.png?raw=true)
