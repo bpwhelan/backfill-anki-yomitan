@@ -16,7 +16,7 @@ def request_handlebar(expression, handlebar):
     body = {
         "text": expression,
         "type": "term",
-        "markers": [handlebar],
+        "markers": [handlebar, "reading"],
         "maxEntries": 1,
     }
 
@@ -42,6 +42,8 @@ def request_handlebar(expression, handlebar):
     if not data:
         return None
     
+    # todo: optionally query reading, cycle through x amount of results and 
+    # return handlebar if expression and reading match, else None
     return data[0].get(handlebar)
 
 def ping_yomitan(): 
@@ -59,7 +61,13 @@ def open_dialog():
         return
     
     dlg = BackfillDialog(mw)
-    dlg.exec()
+    
+    if hasattr(dlg, "exec_"):
+        # qt5
+        dlg.exec_()
+    else:
+        # qt6
+        dlg.exec()
 
 class BackfillDialog(QDialog):
     def __init__(self, parent=None):
