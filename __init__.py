@@ -1,15 +1,17 @@
-import urllib
 import json
+import urllib
 from anki.collection import Collection
 from aqt import mw
 from aqt.operations import CollectionOp, OpChanges, OpChangesWithCount
-from aqt.utils import showInfo
+from aqt.utils import showInfo, showWarning
 from aqt.qt import *
+from urllib.error import HTTPError, URLError
 
 request_url = "http://127.0.0.1:8766"
 request_timeout = 10
 ping_timeout = 5
 
+# https://github.com/Kuuuube/yomitan-api/blob/master/docs/api_paths/ankiFields.md
 def request_handlebar(expression, handlebar):
     body = {
         "text": expression,
@@ -24,9 +26,21 @@ def request_handlebar(expression, handlebar):
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    
-    response = urllib.request.urlopen(req, timeout=request_timeout)  
-    data = json.loads(response.read())
+
+    try:
+        response = urllib.request.urlopen(req, timeout=request_timeout)  
+        data = json.loads(response.read())
+    except HTTPError as e:
+        if e.code == 500:
+            raise ValueError("Invalid handlebar specified")
+        else:
+            raise
+    except URLError as e:
+        raise ConnectionRefusedError("Unable to reach Yomitan API")
+
+    # prevent cancelling entire batch if request was successful but data is empty
+    if not data:
+        return None
     
     return data[0].get(handlebar)
 
@@ -41,9 +55,9 @@ def ping_yomitan():
 
 def open_dialog():
     if not ping_yomitan():
-        showInfo("Unable to reach Yomitan API");
+        showWarning("Unable to reach Yomitan API");
         return
-
+    
     dlg = BackfillDialog(mw)
     dlg.exec()
 
