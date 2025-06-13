@@ -1,13 +1,14 @@
 import urllib
 import json
 from anki.collection import Collection
-from aqt.operations import CollectionOp, OpChanges, OpChangesWithCount
 from aqt import mw
+from aqt.operations import CollectionOp, OpChanges, OpChangesWithCount
 from aqt.utils import showInfo
 from aqt.qt import *
 
 request_url = "http://127.0.0.1:8766"
 request_timeout = 10
+ping_timeout = 5
 
 def request_handlebar(expression, handlebar):
     body = {
@@ -26,10 +27,23 @@ def request_handlebar(expression, handlebar):
     
     response = urllib.request.urlopen(req, timeout=request_timeout)  
     data = json.loads(response.read())
-
+    
     return data[0].get(handlebar)
 
+def ping_yomitan(): 
+    req = urllib.request.Request(request_url + "/serverVersion", method="POST")
+    try:
+        response = urllib.request.urlopen(req, timeout=ping_timeout)  
+        data = json.loads(response.read())
+        return data
+    except Exception:
+        return False
+
 def open_dialog():
+    if not ping_yomitan():
+        showInfo("Unable to reach Yomitan API");
+        return
+
     dlg = BackfillDialog(mw)
     dlg.exec()
 
