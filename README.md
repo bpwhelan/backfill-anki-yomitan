@@ -21,9 +21,6 @@ This is a basic Anki add-on to backfill fields using [Yomitan's API](https://git
 Changes can be undone with `Edit -> Undo` or with `CTRL + Z`.
 
 ## Issues
-There is currently an issue in Yomitan which prevents some handlebars, in particular glossary and pitch handlebars, from rendering. It is fixed in testing and should come to stable next week.
-https://github.com/yomidevs/yomitan/pull/2051
-
 The add-on can currently only run on the entire deck.
 
 ## Screenshot
