@@ -40,10 +40,6 @@ def request_handlebar(expression, reading, handlebar):
             raise
     except URLError as e:
         raise ConnectionRefusedError("Unable to reach Yomitan API")
-
-    # prevent cancelling entire batch if request was successful but data is empty
-    if not data:
-        return None
     
     return data
 
@@ -201,13 +197,12 @@ class BackfillDialog(QDialog):
                         continue
 
                     data = get_field_from_request(fields, reading)
-
                     if not data:
                         continue
 
                     note[field] = data
                     # write media if any exists, this currently writes every single file returned by the api, if reading is provided and multiple entries are returned,
-                    # this probably also writes media for the entries that werent selected
+                    # this also writes media for the entries that werent selected
                     dictionary_media = api_request.get("dictionaryMedia", [])
                     for file in dictionary_media:
                         write_media(file)
