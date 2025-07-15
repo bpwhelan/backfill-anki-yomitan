@@ -1,3 +1,4 @@
+import base64
 import json
 import urllib
 from anki.collection import Collection
@@ -18,6 +19,7 @@ def request_handlebar(expression, reading, handlebar):
         "type": "term",
         "markers": [handlebar, "reading"],
         "maxEntries": 4 if reading else 1, # should probably be configurable
+        "includeMedia": True
     }
 
     req = urllib.request.Request(
@@ -43,15 +45,7 @@ def request_handlebar(expression, reading, handlebar):
     if not data:
         return None
     
-    if reading:
-        for entry in data:
-            if entry.get("reading") == reading:
-                return entry.get(handlebar)
-        
-        # no entry matching reading, skip by returning None
-        return None
-    else:
-        return data[0].get(handlebar)
+    return data
 
 def ping_yomitan(): 
     req = urllib.request.Request(request_url + "/yomitanVersion", method="POST")
@@ -64,7 +58,7 @@ def ping_yomitan():
 
 def open_dialog():
     if not ping_yomitan():
-        showWarning("Unable to reach Yomitan API");
+        showWarning("Unable to reach Yomitan API")
         return
     
     dlg = BackfillDialog(mw)
@@ -89,7 +83,7 @@ class BackfillDialog(QDialog):
         self.yomitan_handlebar = QLineEdit()
         self.apply = QPushButton("Run")
         self.cancel = QPushButton("Cancel")
-        self.replace = QCheckBox("Replace");
+        self.replace = QCheckBox("Replace")
 
         form = QFormLayout()
         form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
@@ -162,25 +156,69 @@ class BackfillDialog(QDialog):
         
         note_ids = mw.col.db.list("SELECT DISTINCT nid FROM cards WHERE did = ?", deck_id)
         
+        def write_media(file):
+            try:
+                content = file.get("content")
+                filename = file.get("ankiFilename")
+                anki_media_dir = mw.col.media.dir()
+                decoded = base64.b64decode(content)
+
+                target_path = os.path.join(anki_media_dir, filename)
+
+                with open(target_path, "wb") as f:
+                    f.write(decoded)
+                
+                return True
+            except Exception:
+                return False
+
+        def get_field_from_request(fields, reading):
+            if reading:
+                for entry in fields:
+                    if entry.get("reading") == reading:
+                        return entry.get(handlebar)
+                return None
+            else:
+                return fields[0].get(handlebar)
+
         # https://github.com/wikidattica/reversoanki/pull/1/commits/62f0c9145a5ef7b2bde1dc6dfd5f23a53daac4d0
         def backfill_notes(col):
             notes = []
             for nid in note_ids:
                 note = col.get_note(nid)
-                if expression_field in note and field in note:
-                    current = note[field].strip()
-                    if should_replace or not current:
-                        reading = note[reading_field] if reading_field else None
-                        data = request_handlebar(note[expression_field].strip(), reading, handlebar)
-                        if data:
-                            note[field] = data
-                            notes.append(note)
+                if not expression_field in note or not field in note:
+                    continue
+
+                current = note[field].strip()
+                if should_replace or not current:
+                    reading = note[reading_field] if reading_field else None
+                    api_request = request_handlebar(note[expression_field].strip(), reading, handlebar)
+                    if not api_request:
+                        continue
+
+                    fields = api_request.get("fields")
+                    if not fields:
+                        continue
+
+                    data = get_field_from_request(fields, reading)
+
+                    if not data:
+                        continue
+
+                    note[field] = data
+                    # write media if any exists, this currently writes every single file returned by the api, if reading is provided and multiple entries are returned,
+                    # this probably also writes media for the entries that werent selected
+                    dictionary_media = api_request.get("dictionaryMedia", [])
+                    for file in dictionary_media:
+                        write_media(file)
+
+                    notes.append(note)
            
             return OpChangesWithCount(changes=col.update_notes(notes), count=len(notes))
-
+        
         def on_success(result):
             mw.col.reset()
-            showInfo(f"Updated {result.count} cards");
+            showInfo(f"Updated {result.count} cards")
             
         op = CollectionOp(
             parent = mw,
