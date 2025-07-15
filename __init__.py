@@ -39,7 +39,7 @@ def request_handlebar(expression, reading, handlebar):
         else:
             raise
     except URLError as e:
-        raise ConnectionRefusedError("Unable to reach Yomitan API")
+        raise ConnectionRefusedError(f"Request to Yomitan API failed: {e.reason}")
     
     return data
 
@@ -212,6 +212,7 @@ class BackfillDialog(QDialog):
                         # if audio handlebar is requested, data contains the relevant audio filename, write only that file
                         if filename in data:
                             write_media(file)
+                            break
 
                     note[field] = data
                     notes.append(note)
