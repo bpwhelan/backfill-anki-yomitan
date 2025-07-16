@@ -200,16 +200,17 @@ class BackfillDialog(QDialog):
                     if not data:
                         continue
 
-                    # write media if any exists, this currently writes every single file returned by the api, if reading is provided and multiple entries are returned,
-                    # this also writes media for the entries that werent selected
+                    # checks if handlebar data contains filename and writes it to anki if present
                     dictionary_media = api_request.get("dictionaryMedia", [])
                     for file in dictionary_media:
-                        write_media(file)
+                        filename = file.get("ankiFilename")
+                        if filename in data:
+                            write_media(file)
                     
                     audio_media = api_request.get("audioMedia", [])
                     for file in audio_media:
                         filename = file.get("ankiFilename")
-                        # if audio handlebar is requested, data contains the relevant audio filename, write only that file
+                        # if audio handlebar is requested, handlebar data contains the relevant audio filename, write only that file
                         if filename in data:
                             write_media(file)
                             break
