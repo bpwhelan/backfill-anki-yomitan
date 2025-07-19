@@ -21,6 +21,8 @@ This is a basic Anki add-on to backfill fields including media and audio using [
 Changes can be undone with `Edit -> Undo` or with `CTRL + Z`.
 
 ## Issues
+The addon has been updated to support the changes to the API in Yomitan 25.7.14.1, previous versions of Yomitan are not supported anymore.
+
 The add-on can currently only run on the entire deck.
 
 If you're backfilling audio, please be aware that retrieving audio - depending on the audio sources configured in Yomitan - can be quite slow.
