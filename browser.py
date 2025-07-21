@@ -4,7 +4,7 @@ from aqt.qt import *
 from aqt.browser import Browser
 
 class BrowserBackfill:
-    def run(self):
+    def __init__(self):
         gui_hooks.browser_menus_did_init.append(self._add_to_browser)
 
     def _open_browser_dialog(self, browser: Browser):

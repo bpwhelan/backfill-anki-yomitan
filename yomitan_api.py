@@ -1,7 +1,5 @@
-import base64
 import json
 import urllib
-from aqt.qt import *
 from urllib.error import HTTPError, URLError
 
 request_url = "http://127.0.0.1:8766"
