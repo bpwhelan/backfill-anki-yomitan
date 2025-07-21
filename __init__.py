@@ -403,3 +403,8 @@ preset_action.triggered.connect(open_preset_dialog)
 mw.form.menuTools.addSeparator()
 mw.form.menuTools.addAction(manual_action)
 mw.form.menuTools.addAction(preset_action)
+from .browser import BrowserBackfill
+from .tools import ToolsBackfill
+
+tools_menu = ToolsBackfill()
+browser_menu = BrowserBackfill()
