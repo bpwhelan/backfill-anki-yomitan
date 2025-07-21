@@ -1,12 +1,12 @@
 import base64
 import json
 import urllib
-from anki.collection import Collection
 from aqt import mw
 from aqt.operations import CollectionOp, OpChanges, OpChangesWithCount
 from aqt.utils import showInfo, showWarning
 from aqt.qt import *
 from urllib.error import HTTPError, URLError
+from .browser import BrowserBackfill
 
 request_url = "http://127.0.0.1:8766"
 request_timeout = 10
@@ -68,7 +68,7 @@ def open_dialog():
         dlg.exec()
 
 class BackfillDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super().__init__(parent)
         self.setWindowTitle("Yomitan Backfill")
 
@@ -234,3 +234,6 @@ class BackfillDialog(QDialog):
 action = QAction("Backfill from Yomitan", mw)
 action.triggered.connect(open_dialog)
 mw.form.menuTools.addAction(action)
+
+browser_menu = BrowserBackfill()
+browser_menu.run()
