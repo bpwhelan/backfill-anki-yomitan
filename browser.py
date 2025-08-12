@@ -4,7 +4,9 @@ from aqt.browser import Browser
 from aqt.operations import CollectionOp, OpChangesWithCount
 from aqt.utils import showInfo, showWarning
 from aqt.qt import *
-from . import yomitan_api  
+from . import yomitan_api 
+
+from . import shared
 
 class BrowserBackfill:
     def __init__(self):
@@ -25,11 +27,32 @@ class BrowserBackfill:
         else:
             # qt6
             dlg.exec()
+            
+    def _open_browser_dialog_preset(self, browser: Browser):
+        selected_note_ids = list(browser.selectedNotes())
+        if not selected_note_ids:
+            showWarning("No notes selected")
+            return
+
+        dlg = self.PresetDialog(browser, selected_note_ids)
+        dlg.resize(350, dlg.height())
+
+        if hasattr(dlg, "exec_"):
+            # qt5
+            dlg.exec_()
+        else:
+            # qt6
+            dlg.exec()
 
     def _add_to_browser(self, browser: Browser):
         action = QAction("Backfill from Yomitan", browser)
         action.triggered.connect(lambda: self._open_browser_dialog(browser))
         browser.form.menuEdit.addAction(action)
+        
+        action = QAction("Backfill from Yomitan (Preset)", browser)
+        action.triggered.connect(lambda: self._open_browser_dialog_preset(browser))
+        browser.form.menuEdit.addAction(action)
+        
     
     class BrowserDialog(QDialog):
         def __init__(self, parent, selected_note_ids):
@@ -189,3 +212,64 @@ class BrowserBackfill:
             )
             
             op.success(on_success).run_in_background()
+            
+    class PresetDialog(QDialog):
+        def __init__(self, parent, selected_note_ids):
+            super().__init__(parent)
+            if not yomitan_api.ping_yomitan():
+                showWarning("Could not connect to the Yomitan server. Please ensure it's running.")
+                return
+
+            config = mw.addonManager.getConfig(__name__)
+            self.presets = config.get("presets")
+
+            if not self.presets:
+                showInfo("No presets found in the add-on's config.json file.")
+                return
+
+            self.selected_note_ids = selected_note_ids
+            self.setWindowTitle("Yomitan Backfill (Preset)")
+            self.setWindowModality(Qt.WindowModality.WindowModal)
+
+            self.preset_selector = QComboBox()
+            for preset in self.presets:
+                self.preset_selector.addItem(preset.get("name", "Unnamed Preset"), preset)
+
+            self.run_button = QPushButton("Run Preset")
+            self.cancel_button = QPushButton("Cancel")
+            
+            form = QFormLayout()
+            form.addRow("Select Preset:", self.preset_selector)
+
+            buttons = QHBoxLayout()
+            buttons.addStretch()
+            buttons.addWidget(self.run_button)
+            buttons.addWidget(self.cancel_button)
+
+            layout = QVBoxLayout()
+            layout.addLayout(form)
+            layout.addLayout(buttons)
+            self.setLayout(layout)
+            
+            self.run_button.clicked.connect(self._on_run)
+            self.cancel_button.clicked.connect(self.reject)
+            
+            self.resize(400, self.height())
+            
+        def _on_run(self):
+            preset = self.preset_selector.currentData()
+            if not preset:
+                return
+
+            expression_field = preset.get("expressionField")
+            reading_field = preset.get("readingField", "") # Can be None/empty
+            targets = preset.get("targets", [])
+            should_replace = preset.get("replaceExisting", False)
+
+            if not all([expression_field, targets]):
+                showWarning("The selected preset is misconfigured. It's missing 'expressionField' or 'targets'.")
+                return
+            
+            self.accept() # Close dialog before starting the long operation
+            
+            shared.run_backfill_operation(mw, self.selected_note_ids, expression_field, reading_field, targets, should_replace)

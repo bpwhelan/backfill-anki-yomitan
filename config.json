@@ -1,0 +1,92 @@
+{
+  "presets": [
+    {
+      "name": "Lapis Preset",
+      "expressionField": "Expression",
+      "readingField": "",
+      "replaceExisting": true,
+      "targets": [
+        {
+          "fieldToFill": "Expression",
+          "handlebar": "{expression}"
+        },
+        {
+          "fieldToFill": "ExpressionFurigana",
+          "handlebar": "{furigana-plain}"
+        },
+        {
+          "fieldToFill": "ExpressionReading",
+          "handlebar": "{reading}"
+        },
+        {
+          "fieldToFill": "MainDefinition",
+          "handlebar": "{single-glossary-jitendexorg-2025-06-01}"
+        },
+        {
+          "fieldToFill": "Glossary",
+          "handlebar": "{glossary}"
+        },
+        {
+          "fieldToFill": "PitchPosition",
+          "handlebar": "{pitch-accent-positions}"
+        },
+        {
+          "fieldToFill": "PitchCategories",
+          "handlebar": "{pitch-accent-categories}"
+        },
+        {
+          "fieldToFill": "Frequency",
+          "handlebar": "{frequencies}"
+        },
+        {
+          "fieldToFill": "FreqSort",
+          "handlebar": "{frequency-harmonic-rank}"
+        }
+      ]
+    },
+    {
+      "name": "Lapis Preset (no Replace)",
+      "expressionField": "Expression",
+      "readingField": "ExpressionReading",
+      "replaceExisting": false,
+      "targets": [
+        {
+          "fieldToFill": "Expression",
+          "handlebar": "{expression}"
+        },
+        {
+          "fieldToFill": "ExpressionFurigana",
+          "handlebar": "{furigana-plain}"
+        },
+        {
+          "fieldToFill": "ExpressionReading",
+          "handlebar": "{reading}"
+        },
+        {
+          "fieldToFill": "MainDefinition",
+          "handlebar": "{single-glossary-jitendexorg-2025-06-01}"
+        },
+        {
+          "fieldToFill": "Glossary",
+          "handlebar": "{glossary}"
+        },
+        {
+          "fieldToFill": "PitchPosition",
+          "handlebar": "{pitch-accent-positions}"
+        },
+        {
+          "fieldToFill": "PitchCategories",
+          "handlebar": "{pitch-accent-categories}"
+        },
+        {
+          "fieldToFill": "Frequency",
+          "handlebar": "{frequencies}"
+        },
+        {
+          "fieldToFill": "FreqSort",
+          "handlebar": "{frequency-harmonic-rank}"
+        }
+      ]
+    }
+  ]
+}

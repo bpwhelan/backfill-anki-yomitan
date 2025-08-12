@@ -8,10 +8,14 @@ ping_timeout = 5
 
 # https://github.com/Kuuuube/yomitan-api/blob/master/docs/api_paths/ankiFields.md
 def request_handlebar(expression, reading, handlebar):
+    if isinstance(handlebar, list):
+        markers = handlebar + ["reading"]
+    else:
+        markers = [handlebar, "reading"]
     body = {
         "text": expression,
         "type": "term",
-        "markers": [handlebar, "reading"],
+        "markers": markers,
         "maxEntries": 4 if reading else 1, # should probably be configurable
         "includeMedia": True
     }

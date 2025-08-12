@@ -5,11 +5,18 @@ from aqt.utils import showInfo, showWarning
 from aqt.qt import *
 from . import yomitan_api  
 
+from . import shared
+
 class ToolsBackfill:
     def __init__(self):
         action = QAction("Backfill from Yomitan", mw)
         action.triggered.connect(self.open_dialog)
+        
+        action2 = QAction("Backfill from Yomitan (Preset)", mw)
+        action2.triggered.connect(self.open_preset_dialog)
+        
         mw.form.menuTools.addAction(action)
+        mw.form.menuTools.addAction(action2)
 
     def open_dialog(self):
         if not yomitan_api.ping_yomitan():
@@ -25,6 +32,22 @@ class ToolsBackfill:
         else:
             # qt6
             dlg.exec()
+            
+    def open_preset_dialog(self):
+        if not yomitan_api.ping_yomitan():
+            showWarning("Could not connect to the Yomitan server. Please ensure it's running.")
+            return
+        
+        config = mw.addonManager.getConfig(__name__)
+        presets = config.get("presets")
+        
+        if not presets:
+            showInfo("No presets found in the add-on's config.json file.")
+            return
+            
+        dlg = self.PresetDialog(mw, presets)
+        dlg.exec()
+
 
     class ToolsDialog(QDialog):
         def __init__(self, parent):
@@ -189,3 +212,76 @@ class ToolsBackfill:
             )
             
             op.success(on_success).run_in_background()
+            
+    class PresetDialog(QDialog):
+        def __init__(self, parent, presets):
+            super().__init__(parent)
+            self.presets = presets
+            self.setWindowTitle("Yomitan Backfill (Preset)")
+            self.setWindowModality(Qt.WindowModality.WindowModal)
+
+            self.preset_selector = QComboBox()
+            for preset in self.presets:
+                self.preset_selector.addItem(preset.get("name", "Unnamed Preset"), preset)
+                
+             # Allow changing deck name in the preset
+            self.decks = QComboBox()
+            
+            form = QFormLayout()
+            form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+            form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+            form.addRow("Select Preset:", self.preset_selector)
+            form.addRow("Deck Name:", self.decks)
+
+            self.run_button = QPushButton("Run Preset")
+            self.cancel_button = QPushButton("Cancel")
+
+            buttons = QHBoxLayout()
+            buttons.addStretch()
+            buttons.addWidget(self.run_button)
+            buttons.addWidget(self.cancel_button)
+
+            layout = QVBoxLayout()
+            layout.addLayout(form)
+            layout.addLayout(buttons)
+            self.setLayout(layout)
+            self._load_decks()
+            
+            self.run_button.clicked.connect(self._on_run)
+            self.cancel_button.clicked.connect(self.reject)
+            
+            self.resize(400, self.height())
+            
+        def _load_decks(self):
+            self.decks.clear()
+            decks = mw.col.decks.all()
+            for deck in decks:
+                name = deck.get("name")
+                deck_id = deck.get("id")
+                self.decks.addItem(name, deck_id)
+
+            
+        def _on_run(self):
+            preset = self.preset_selector.currentData()
+            deck = self.decks.currentData()
+            if not preset:
+                return
+
+            if not deck:
+                showWarning(f"Deck '{deck}' from the preset could not be found.")
+                return
+
+            expression_field = preset.get("expressionField")
+            reading_field = preset.get("readingField") # Can be None/empty
+            targets = preset.get("targets", [])
+            should_replace = preset.get("replaceExisting", False)
+
+            if not all([expression_field, targets]):
+                showWarning("The selected preset is misconfigured. It's missing 'expressionField' or 'targets'.")
+                return
+            
+            self.accept() # Close dialog before starting the long operation
+            
+            note_ids = mw.col.db.list("SELECT DISTINCT nid FROM cards WHERE did = ?", deck)
+            
+            shared.run_backfill_operation(mw, note_ids, expression_field, reading_field, targets, should_replace)
